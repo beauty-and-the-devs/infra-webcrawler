@@ -1,0 +1,83 @@
+# =============================================================================
+# Terraform Variables Example
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Required: GCP Project
+# -----------------------------------------------------------------------------
+
+project_id = "your-gcp-project-id"
+
+# -----------------------------------------------------------------------------
+# Optional: Project Naming
+# -----------------------------------------------------------------------------
+
+project_name = "webcrawler-mcp"
+environment  = "prod"  # dev, staging, prod
+
+# -----------------------------------------------------------------------------
+# Optional: Region Configuration (US regions for TikTok Shop)
+# -----------------------------------------------------------------------------
+
+region = "us-central1"
+zone   = "us-central1-a"
+
+# Other US region options:
+# - us-east1 (South Carolina)
+# - us-east4 (Northern Virginia)
+# - us-west1 (Oregon)
+# - us-west2 (Los Angeles)
+
+# -----------------------------------------------------------------------------
+# Optional: Network Configuration
+# -----------------------------------------------------------------------------
+
+network_cidr = "10.0.0.0/24"
+
+# SSH access - Add your IP for direct SSH access
+# Find your IP: curl ifconfig.me
+allowed_ssh_cidrs = [
+  # "YOUR_IP/32",
+]
+
+# HTTP API access
+enable_http_api = false  # Set to true to expose REST API
+
+allowed_http_cidrs = [
+  "0.0.0.0/0",  # Allow from anywhere (use with caution)
+]
+
+# -----------------------------------------------------------------------------
+# Optional: Compute Configuration
+# -----------------------------------------------------------------------------
+
+# Machine types:
+# - e2-small      : 2 vCPU, 2 GB RAM  (minimal, may be slow)
+# - e2-medium     : 2 vCPU, 4 GB RAM  (minimum recommended)
+# - e2-standard-2 : 2 vCPU, 8 GB RAM  (recommended)
+# - e2-standard-4 : 4 vCPU, 16 GB RAM (high load)
+
+machine_type   = "e2-standard-2"
+boot_disk_size = 30
+boot_disk_type = "pd-balanced"  # pd-standard, pd-balanced, pd-ssd
+
+# Use preemptible for ~60-90% cost savings (may be terminated anytime)
+preemptible = false
+
+# -----------------------------------------------------------------------------
+# Optional: Application Configuration
+# -----------------------------------------------------------------------------
+
+# Git repository (leave empty to deploy manually)
+git_repo_url = "https://github.com/YOUR_USERNAME/mcp-webcrawler.git"
+git_branch   = "main"
+
+# Or use a pre-built Docker image
+# docker_image = "gcr.io/your-project/webcrawler-mcp:latest"
+
+# Application settings
+log_level         = "info"
+browser_pool_size = 2
+rate_limit_rpm    = 30

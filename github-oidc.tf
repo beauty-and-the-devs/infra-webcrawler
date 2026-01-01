@@ -88,3 +88,21 @@ resource "google_project_iam_member" "github_actions_sa_user" {
   role    = "roles/iam.serviceAccountUser"
   member  = "serviceAccount:${google_service_account.github_actions[0].email}"
 }
+
+# Grant GitHub Actions SA permission to use IAP tunnel for SSH
+resource "google_project_iam_member" "github_actions_iap" {
+  count = var.github_repo != "" ? 1 : 0
+
+  project = var.project_id
+  role    = "roles/iap.tunnelResourceAccessor"
+  member  = "serviceAccount:${google_service_account.github_actions[0].email}"
+}
+
+# Grant GitHub Actions SA permission to use OS Login
+resource "google_project_iam_member" "github_actions_oslogin" {
+  count = var.github_repo != "" ? 1 : 0
+
+  project = var.project_id
+  role    = "roles/compute.osLogin"
+  member  = "serviceAccount:${google_service_account.github_actions[0].email}"
+}

@@ -69,8 +69,53 @@ output "subnet_cidr" {
 # -----------------------------------------------------------------------------
 
 output "service_account_email" {
-  description = "Email of the service account"
+  description = "Email of the VM service account"
   value       = google_service_account.webcrawler.email
+}
+
+# -----------------------------------------------------------------------------
+# Artifact Registry
+# -----------------------------------------------------------------------------
+
+output "artifact_registry_repository" {
+  description = "Artifact Registry repository URL"
+  value       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.webcrawler.repository_id}"
+}
+
+output "docker_image" {
+  description = "Full Docker image path"
+  value       = local.docker_image
+}
+
+# -----------------------------------------------------------------------------
+# GitHub Actions (Workload Identity Federation)
+# -----------------------------------------------------------------------------
+
+output "github_actions_service_account" {
+  description = "Service account email for GitHub Actions"
+  value       = var.github_repo != "" ? google_service_account.github_actions[0].email : "GitHub repo not configured"
+}
+
+output "workload_identity_provider" {
+  description = "Workload Identity Provider for GitHub Actions"
+  value       = var.github_repo != "" ? google_iam_workload_identity_pool_provider.github[0].name : "GitHub repo not configured"
+}
+
+# -----------------------------------------------------------------------------
+# GitHub Actions Secrets (copy these to GitHub)
+# -----------------------------------------------------------------------------
+
+output "github_secrets" {
+  description = "Values to set as GitHub repository secrets"
+  value = var.github_repo != "" ? {
+    GCP_PROJECT_ID        = var.project_id
+    GCP_REGION            = var.region
+    GCP_ZONE              = var.zone
+    GCP_SERVICE_ACCOUNT   = google_service_account.github_actions[0].email
+    GCP_WORKLOAD_IDENTITY = google_iam_workload_identity_pool_provider.github[0].name
+    GCP_ARTIFACT_REGISTRY = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.webcrawler.repository_id}"
+    GCP_VM_NAME           = google_compute_instance.webcrawler.name
+  } : null
 }
 
 # -----------------------------------------------------------------------------
@@ -82,19 +127,16 @@ output "useful_commands" {
   value       = <<-EOT
 
     # SSH into the instance
-    gcloud compute ssh ${google_compute_instance.webcrawler.name} --zone=${var.zone} --project=${var.project_id}
+    gcloud compute ssh ${google_compute_instance.webcrawler.name} --zone=${var.zone} --project=${var.project_id} --tunnel-through-iap
 
     # View startup script logs
-    gcloud compute ssh ${google_compute_instance.webcrawler.name} --zone=${var.zone} --project=${var.project_id} --command="sudo cat /var/log/startup-script.log"
+    gcloud compute ssh ${google_compute_instance.webcrawler.name} --zone=${var.zone} --project=${var.project_id} --tunnel-through-iap --command="sudo cat /var/log/startup-script.log"
 
     # View Docker logs
-    gcloud compute ssh ${google_compute_instance.webcrawler.name} --zone=${var.zone} --project=${var.project_id} --command="sudo docker logs webcrawler-mcp"
+    gcloud compute ssh ${google_compute_instance.webcrawler.name} --zone=${var.zone} --project=${var.project_id} --tunnel-through-iap --command="sudo docker logs webcrawler-mcp"
 
-    # Restart the container
-    gcloud compute ssh ${google_compute_instance.webcrawler.name} --zone=${var.zone} --project=${var.project_id} --command="cd /opt/webcrawler-mcp && sudo docker compose restart"
-
-    # Update and redeploy
-    gcloud compute ssh ${google_compute_instance.webcrawler.name} --zone=${var.zone} --project=${var.project_id} --command="cd /opt/webcrawler-mcp && sudo git pull && sudo docker compose up -d --build"
+    # Manually pull and redeploy latest image
+    gcloud compute ssh ${google_compute_instance.webcrawler.name} --zone=${var.zone} --project=${var.project_id} --tunnel-through-iap --command="sudo docker pull ${local.docker_image} && sudo docker stop webcrawler-mcp && sudo docker rm webcrawler-mcp && sudo docker run -d --name webcrawler-mcp --restart unless-stopped --shm-size=2gb --env-file /opt/webcrawler-mcp/.env ${var.enable_http_api ? "-p 3000:3000" : ""} ${local.docker_image}"
 
   EOT
 }

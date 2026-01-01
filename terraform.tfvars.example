@@ -11,11 +11,19 @@
 project_id = "your-gcp-project-id"
 
 # -----------------------------------------------------------------------------
+# Required: GitHub Repository (for CI/CD)
+# -----------------------------------------------------------------------------
+
+# Format: "owner/repo-name" (e.g., "mycompany/mcp-webcrawler")
+# This enables Workload Identity Federation for GitHub Actions
+github_repo = "your-username/mcp-webcrawler"
+
+# -----------------------------------------------------------------------------
 # Optional: Project Naming
 # -----------------------------------------------------------------------------
 
 project_name = "webcrawler-mcp"
-environment  = "prod"  # dev, staging, prod
+environment  = "prod" # dev, staging, prod
 
 # -----------------------------------------------------------------------------
 # Optional: Region Configuration (US regions for TikTok Shop)
@@ -36,17 +44,17 @@ zone   = "us-central1-a"
 
 network_cidr = "10.0.0.0/24"
 
-# SSH access - Add your IP for direct SSH access
+# SSH access - Add your IP for direct SSH access (optional, IAP always works)
 # Find your IP: curl ifconfig.me
 allowed_ssh_cidrs = [
   # "YOUR_IP/32",
 ]
 
 # HTTP API access
-enable_http_api = false  # Set to true to expose REST API
+enable_http_api = true
 
 allowed_http_cidrs = [
-  "0.0.0.0/0",  # Allow from anywhere (use with caution)
+  "0.0.0.0/0", # Allow from anywhere (use with caution)
 ]
 
 # -----------------------------------------------------------------------------
@@ -61,7 +69,7 @@ allowed_http_cidrs = [
 
 machine_type   = "e2-standard-2"
 boot_disk_size = 30
-boot_disk_type = "pd-balanced"  # pd-standard, pd-balanced, pd-ssd
+boot_disk_type = "pd-balanced" # pd-standard, pd-balanced, pd-ssd
 
 # Use preemptible for ~60-90% cost savings (may be terminated anytime)
 preemptible = false
@@ -70,12 +78,9 @@ preemptible = false
 # Optional: Application Configuration
 # -----------------------------------------------------------------------------
 
-# Git repository (leave empty to deploy manually)
-git_repo_url = "https://github.com/YOUR_USERNAME/mcp-webcrawler.git"
-git_branch   = "main"
-
-# Or use a pre-built Docker image
-# docker_image = "gcr.io/your-project/webcrawler-mcp:latest"
+# Docker image tag (default: latest)
+# GitHub Actions will push with commit SHA and 'latest' tags
+docker_image_tag = "latest"
 
 # Application settings
 log_level         = "info"

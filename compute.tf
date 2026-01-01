@@ -31,6 +31,9 @@ resource "google_project_iam_member" "webcrawler_monitoring" {
 # -----------------------------------------------------------------------------
 
 locals {
+  # Full image path in Artifact Registry
+  docker_image = "${var.region}-docker.pkg.dev/${var.project_id}/${var.project_name}-docker/webcrawler-mcp:${var.docker_image_tag}"
+
   startup_script = <<-EOF
     #!/bin/bash
     set -e
@@ -60,61 +63,78 @@ locals {
       systemctl start docker
     fi
 
-    # Install Git
-    apt-get install -y git
+    # Configure Docker to authenticate with Artifact Registry
+    echo "Configuring Docker authentication..."
+    gcloud auth configure-docker ${var.region}-docker.pkg.dev --quiet
 
     # Create application directory
     APP_DIR="/opt/webcrawler-mcp"
     mkdir -p $APP_DIR
     cd $APP_DIR
 
-    # Clone or pull repository
-    %{if var.git_repo_url != ""}
-    if [ -d ".git" ]; then
-      echo "Pulling latest changes..."
-      git pull origin ${var.git_branch}
-    else
-      echo "Cloning repository..."
-      git clone -b ${var.git_branch} ${var.git_repo_url} .
-    fi
-    %{else}
-    echo "No git repository URL provided. Skipping clone."
-    %{endif}
-
     # Create environment file
     cat > .env << 'ENVEOF'
-    NODE_ENV=production
-    LOG_LEVEL=${var.log_level}
-    BROWSER_HEADLESS=true
-    BROWSER_POOL_SIZE=${var.browser_pool_size}
-    RATE_LIMIT_REQUESTS_PER_MINUTE=${var.rate_limit_rpm}
-    ENVEOF
+NODE_ENV=production
+LOG_LEVEL=${var.log_level}
+BROWSER_HEADLESS=true
+BROWSER_POOL_SIZE=${var.browser_pool_size}
+RATE_LIMIT_REQUESTS_PER_MINUTE=${var.rate_limit_rpm}
+ENVEOF
 
-    # Build and run Docker container
-    %{if var.docker_image != ""}
-    echo "Using pre-built Docker image: ${var.docker_image}"
-    docker pull ${var.docker_image}
+    # Pull and run Docker container from Artifact Registry
+    DOCKER_IMAGE="${local.docker_image}"
+    echo "Pulling Docker image: $DOCKER_IMAGE"
+
+    # Stop and remove existing container if running
+    docker stop webcrawler-mcp 2>/dev/null || true
+    docker rm webcrawler-mcp 2>/dev/null || true
+
+    # Pull latest image
+    docker pull $DOCKER_IMAGE
+
+    # Run container
     docker run -d \
       --name webcrawler-mcp \
       --restart unless-stopped \
       --shm-size=2gb \
       --env-file .env \
-      %{if var.enable_http_api}-p 3000:3000%{endif} \
-      ${var.docker_image}
-    %{else}
-    if [ -f "docker-compose.yml" ]; then
-      echo "Building and starting with Docker Compose..."
-      %{if var.enable_http_api}
-      docker compose --profile http up -d --build
-      %{else}
-      docker compose up -d --build
-      %{endif}
-    else
-      echo "No docker-compose.yml found. Please deploy manually."
-    fi
-    %{endif}
+      %{if var.enable_http_api}-p 3000:3000 \%{endif}
+      $DOCKER_IMAGE
 
     echo "=== Startup script completed at $(date) ==="
+  EOF
+
+  # Script to update/redeploy the container (used by GitHub Actions)
+  deploy_script = <<-EOF
+    #!/bin/bash
+    set -e
+
+    DOCKER_IMAGE="${local.docker_image}"
+    APP_DIR="/opt/webcrawler-mcp"
+
+    echo "Deploying $DOCKER_IMAGE..."
+
+    # Configure Docker auth
+    gcloud auth configure-docker ${var.region}-docker.pkg.dev --quiet
+
+    # Pull new image
+    docker pull $DOCKER_IMAGE
+
+    # Stop and remove existing container
+    docker stop webcrawler-mcp 2>/dev/null || true
+    docker rm webcrawler-mcp 2>/dev/null || true
+
+    # Run new container
+    cd $APP_DIR
+    docker run -d \
+      --name webcrawler-mcp \
+      --restart unless-stopped \
+      --shm-size=2gb \
+      --env-file .env \
+      %{if var.enable_http_api}-p 3000:3000 \%{endif}
+      $DOCKER_IMAGE
+
+    echo "Deployment complete!"
   EOF
 }
 

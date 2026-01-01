@@ -101,25 +101,23 @@ variable "preemptible" {
 }
 
 # -----------------------------------------------------------------------------
+# GitHub Configuration (for CI/CD)
+# -----------------------------------------------------------------------------
+
+variable "github_repo" {
+  description = "GitHub repository (e.g., 'owner/repo-name') for Workload Identity Federation"
+  type        = string
+  default     = "" # Set to enable GitHub Actions OIDC
+}
+
+# -----------------------------------------------------------------------------
 # Application Configuration
 # -----------------------------------------------------------------------------
 
-variable "git_repo_url" {
-  description = "Git repository URL for the webcrawler-mcp project"
+variable "docker_image_tag" {
+  description = "Docker image tag to deploy (default: latest)"
   type        = string
-  default     = "" # Set your repo URL
-}
-
-variable "git_branch" {
-  description = "Git branch to deploy"
-  type        = string
-  default     = "main"
-}
-
-variable "docker_image" {
-  description = "Docker image to use (if not building from source)"
-  type        = string
-  default     = "" # Leave empty to build from source
+  default     = "latest"
 }
 
 variable "log_level" {

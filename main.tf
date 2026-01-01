@@ -8,18 +8,32 @@
 terraform {
   required_version = ">= 1.5.0"
 
+  # ---------------------------------------------------------------------------
+  # Terraform Cloud Configuration
+  # ---------------------------------------------------------------------------
+  # Uncomment and configure for Terraform Cloud
+  # cloud {
+  #   organization = "YOUR_ORG_NAME"
+  #
+  #   workspaces {
+  #     name = "webcrawler-mcp-prod"
+  #   }
+  # }
+
+  # ---------------------------------------------------------------------------
+  # Alternative: GCS Backend (for self-managed state)
+  # ---------------------------------------------------------------------------
+  # backend "gcs" {
+  #   bucket = "your-terraform-state-bucket"
+  #   prefix = "webcrawler-mcp"
+  # }
+
   required_providers {
     google = {
       source  = "hashicorp/google"
       version = "~> 7.14"
     }
   }
-
-  # Uncomment to use GCS backend for state management
-  # backend "gcs" {
-  #   bucket = "your-terraform-state-bucket"
-  #   prefix = "webcrawler-mcp"
-  # }
 }
 
 # -----------------------------------------------------------------------------

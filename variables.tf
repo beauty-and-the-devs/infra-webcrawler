@@ -137,3 +137,28 @@ variable "rate_limit_rpm" {
   type        = number
   default     = 30
 }
+
+# -----------------------------------------------------------------------------
+# Proxy Configuration (for TikTok anti-bot bypass)
+# -----------------------------------------------------------------------------
+
+variable "proxy_server" {
+  description = "Proxy server URL (e.g., 'http://proxy.brightdata.com:22225')"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "proxy_username" {
+  description = "Proxy authentication username"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "proxy_password" {
+  description = "Proxy authentication password"
+  type        = string
+  default     = ""
+  sensitive   = true
+}

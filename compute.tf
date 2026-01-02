@@ -79,6 +79,9 @@ LOG_LEVEL=${var.log_level}
 BROWSER_HEADLESS=true
 BROWSER_POOL_SIZE=${var.browser_pool_size}
 RATE_LIMIT_REQUESTS_PER_MINUTE=${var.rate_limit_rpm}
+PROXY_SERVER=${var.proxy_server}
+PROXY_USERNAME=${var.proxy_username}
+PROXY_PASSWORD=${var.proxy_password}
 ENVEOF
 
     # Pull and run Docker container from Artifact Registry

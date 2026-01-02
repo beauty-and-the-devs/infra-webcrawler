@@ -86,3 +86,18 @@ docker_image_tag = "latest"
 log_level         = "info"
 browser_pool_size = 2
 rate_limit_rpm    = 30
+
+# -----------------------------------------------------------------------------
+# Proxy Configuration (Required for TikTok anti-bot bypass)
+# -----------------------------------------------------------------------------
+# Recommended: Bright Data Residential Proxy
+# Sign up at: https://brightdata.com/
+
+# proxy_server   = "http://brd.superproxy.io:22225"
+# proxy_username = "brd-customer-XXXXX-zone-residential"
+# proxy_password = "your-password-here"
+
+# Alternative: Oxylabs
+# proxy_server   = "http://pr.oxylabs.io:7777"
+# proxy_username = "customer-XXXXX"
+# proxy_password = "your-password-here"
